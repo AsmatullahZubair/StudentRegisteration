@@ -2,6 +2,11 @@ import java.awt.EventQueue;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Random;
 
 import javax.swing.JFrame;
@@ -27,14 +32,13 @@ import javax.swing.ButtonGroup;
 
 public class StudentFrame extends JFrame {
 
-	private String name, rollNo, section, batch, gender, qualification, address, country;
+	private String name, rollNo, section, batch, gender, qualification="", address, country;
 	private int id;
 	private JPanel contentPane;
 	private JTextField nameTextField;
 	private JTextField rollNotextField;
 	private JTextField batchTextField;
 	private JTextField sectionTextField;
-	private final Action action = new SwingAction();
 	private final ButtonGroup buttonGroup = new ButtonGroup();
 	private final JComboBox countryComboBox;
 	private final JRadioButton femaleRadioButton;
@@ -44,7 +48,10 @@ public class StudentFrame extends JFrame {
 	private final JCheckBox gradCheckBox;
 	private final JCheckBox postGradCheckBox;
 	private final JTextArea addressTextArea;
+	private final Action action = new SwingAction();
 	private final Action action_1 = new SwingAction_1();
+	private final Action action_2 = new SwingAction_2();
+	
 	
 	/**
 	 * Launch the application.
@@ -132,16 +139,16 @@ public class StudentFrame extends JFrame {
 		
 		JButton saveButton = new JButton("Save");
 		saveButton.setAction(action);
-		saveButton.setBounds(58, 441, 89, 23);
+		saveButton.setBounds(48, 441, 78, 23);
 		contentPane.add(saveButton);
 		
 		JButton printButton = new JButton("Print");
 		printButton.setAction(action_1);
-		printButton.setBounds(174, 441, 89, 23);
+		printButton.setBounds(136, 441, 78, 23);
 		contentPane.add(printButton);
 		
 		JButton clearButton = new JButton("Clear");
-		clearButton.setBounds(289, 441, 89, 23);
+		clearButton.setBounds(327, 441, 70, 23);
 		contentPane.add(clearButton);
 		
 		JLabel lblNewLabel = new JLabel("Qualification");
@@ -185,20 +192,25 @@ public class StudentFrame extends JFrame {
 		populateCountryComboBox();
 		contentPane.add(countryComboBox);
 		
-		
-	}
+		JButton btnNewButton = new JButton("Database");
+		btnNewButton.setAction(action_2);
+		btnNewButton.setBounds(224, 441, 89, 23);
+		contentPane.add(btnNewButton);	
+	}//end of constructor
+	
 	private class SwingAction extends AbstractAction {
 		public SwingAction() {
 			putValue(NAME, "Save");
 			putValue(SHORT_DESCRIPTION, "This button will save the data to JSON file.");
 		}
 		public void actionPerformed(ActionEvent e) {
-			if(getInfo())
-				JOptionPane.showMessageDialog(rootPane, "Saved To JSON File");
+			if(saveInfoToJSONFile())
+				JOptionPane.showMessageDialog(rootPane, "Record Saved To JSON File!");
 			else
 				JOptionPane.showMessageDialog(rootPane, "Record Saving Error!");
 		}
-		private boolean getInfo() {
+	}//end of SwingAction Class Save
+	public boolean getInfo() {
 			try {
 					setName(nameTextField.getText());
 					setRollNo(rollNotextField.getText());
@@ -211,25 +223,25 @@ public class StudentFrame extends JFrame {
 						setGender("Female");
 					
 					if(matricCheckBox.isSelected())
-						setQualification("Matric");
+						setQualification("Matric, ");
 					if(interCheckBox.isSelected())
-						setQualification(getQualification()+", Inter");
+						setQualification(getQualification()+"Inter, ");
 					if(gradCheckBox.isSelected())
-						setQualification(getQualification()+", Graduate");
+						setQualification(getQualification()+"Graduate, ");
 					if(postGradCheckBox.isSelected())
-						setQualification(getQualification()+", Post-Graduate");
+						setQualification(getQualification()+"Post-Graduate, ");
 				
 					setAddress(addressTextArea.getText());
 					setCountry(countryComboBox.getSelectedItem().toString());
-					
-					
-				return saveInfoToJSONFile();
+
+				return true;
 			}
 			catch (Exception e) {
 				return false;
 			}
 		}
 		private boolean saveInfoToJSONFile() {
+			getInfo();	
 			JSONObject json = new JSONObject();
 			json.put("ID", generateId());
 		    json.put("Name", getName());
@@ -250,7 +262,6 @@ public class StudentFrame extends JFrame {
 		      }
 		}
 		
-	}//end of SwingAction Class
 		private void populateCountryComboBox() {
 			countryComboBox.addItem("Pakistan");
 			countryComboBox.addItem("India");
@@ -323,7 +334,7 @@ public class StudentFrame extends JFrame {
 		}
 		
 		private int generateId() {
-			Random randomNumber = new Random(1000);
+			Random randomNumber = new Random(100);
 			return randomNumber.nextInt();
 		}
 		private int getId() {
@@ -331,19 +342,6 @@ public class StudentFrame extends JFrame {
 		}
 		private void setId(int id) {
 			this.id = id;
-		}
-
-	private class SwingAction_1 extends AbstractAction {
-		public SwingAction_1() {
-			putValue(NAME, "Display");
-			putValue(SHORT_DESCRIPTION, "This Button Will Display Information");
-		}
-		public void actionPerformed(ActionEvent e) {
-			
-			if(getInfoFromJson())
-				new Student(getId(),getName(),getRollNo(), getBatch(), getSection(), getGender(), getQualification(), getAddress(),getCountry()).setVisible(true);
-			else
-				JOptionPane.showMessageDialog(rootPane, "JSON File Reading Error!");
 		}
 		private boolean getInfoFromJson() {
 			// TODO Auto-generated method stub
@@ -363,6 +361,44 @@ public class StudentFrame extends JFrame {
 				e.printStackTrace();
 			return false;
 			}
+		}
+	private class SwingAction_2 extends AbstractAction {
+		public SwingAction_2() {
+			putValue(NAME, "Database");
+			putValue(SHORT_DESCRIPTION, "This button will insert the data to MySql Database");
+		}
+		public void actionPerformed(ActionEvent e) {
+			Connection con = SQLConnection.makeConnection();
+			getInfo();
+			String sqlQuery = "insert into student values(?,?,?,?,?,?,?,?,?)";
+			try {
+				PreparedStatement pst=con.prepareStatement(sqlQuery);
+				pst.setInt(1, generateId());
+				pst.setString(2, getRollNo());
+				pst.setString(3, getName());
+				pst.setString(4, getBatch());
+				pst.setString(5, getSection());
+				pst.setString(6, getGender());
+				pst.setString(7, getQualification());
+				pst.setString(8, getAddress());
+				pst.setString(9, getCountry());
+				if(pst.executeUpdate()==1)
+					JOptionPane.showMessageDialog(rootPane, "Record Saved To SQl Database!");
+				else
+					JOptionPane.showMessageDialog(rootPane, "Database Record Saving Error!");
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+		}
+	}
+	private class SwingAction_1 extends AbstractAction {
+		public SwingAction_1() {
+			putValue(NAME, "Print");
+			putValue(SHORT_DESCRIPTION, "This Button Will Get Data From Database");
+		}
+		public void actionPerformed(ActionEvent e) {
 		}
 	}
 }
