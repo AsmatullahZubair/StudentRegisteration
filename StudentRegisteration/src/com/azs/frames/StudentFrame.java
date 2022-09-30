@@ -1,3 +1,4 @@
+package com.azs.frames;
 import java.awt.EventQueue;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -6,15 +7,15 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Random;
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+
+import com.azs.beans.StudentBean;
+import com.azs.dao.StudentDao;
+import com.azs.daoImpl.StudentDaoImpl;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -32,8 +33,6 @@ import javax.swing.ButtonGroup;
 
 public class StudentFrame extends JFrame {
 
-	private String name, rollNo, section, batch, gender, qualification="", address, country;
-	private int id;
 	private JPanel contentPane;
 	private JTextField nameTextField;
 	private JTextField rollNotextField;
@@ -51,7 +50,9 @@ public class StudentFrame extends JFrame {
 	private final Action action = new SwingAction();
 	private final Action action_1 = new SwingAction_1();
 	private final Action action_2 = new SwingAction_2();
-	
+	private final Action action_3 = new SwingAction_3();
+	private StudentBean studentBean = new StudentBean();
+	private StudentDao studentDao = new StudentDaoImpl();
 	
 	/**
 	 * Launch the application.
@@ -67,7 +68,7 @@ public class StudentFrame extends JFrame {
 				}
 			}
 		});
-	}
+	}//end of main method
 
 	/**
 	 * Create the frame.
@@ -147,9 +148,10 @@ public class StudentFrame extends JFrame {
 		printButton.setBounds(136, 441, 78, 23);
 		contentPane.add(printButton);
 		
-		JButton clearButton = new JButton("Clear");
-		clearButton.setBounds(327, 441, 70, 23);
-		contentPane.add(clearButton);
+		JButton getDatabaseButton = new JButton("Print From Database");
+		getDatabaseButton.setAction(action_3);
+		getDatabaseButton.setBounds(327, 441, 70, 23);
+		contentPane.add(getDatabaseButton);
 		
 		JLabel lblNewLabel = new JLabel("Qualification");
 		lblNewLabel.setBounds(48, 256, 78, 14);
@@ -196,62 +198,62 @@ public class StudentFrame extends JFrame {
 		btnNewButton.setAction(action_2);
 		btnNewButton.setBounds(224, 441, 89, 23);
 		contentPane.add(btnNewButton);	
-	}//end of constructor
+		
+	}/**
+	 * End of Constructor.
+	 */
 	
-	private class SwingAction extends AbstractAction {
-		public SwingAction() {
-			putValue(NAME, "Save");
-			putValue(SHORT_DESCRIPTION, "This button will save the data to JSON file.");
-		}
-		public void actionPerformed(ActionEvent e) {
-			if(saveInfoToJSONFile())
-				JOptionPane.showMessageDialog(rootPane, "Record Saved To JSON File!");
-			else
-				JOptionPane.showMessageDialog(rootPane, "Record Saving Error!");
-		}
-	}//end of SwingAction Class Save
-	public boolean getInfo() {
+	//------->Methods
+	//------->Method to insert data into Country Combo Box
+	private void populateCountryComboBox() {
+		countryComboBox.addItem("Pakistan");
+		countryComboBox.addItem("India");
+		countryComboBox.addItem("China");
+	}
+	// Method to fetch data from TextFilds
+	public int getStudentInfo() {
 			try {
-					setName(nameTextField.getText());
-					setRollNo(rollNotextField.getText());
-					setBatch(batchTextField.getText());
-					setSection(sectionTextField.getText());
+				studentBean.setStudentName(nameTextField.getText());
+				studentBean.setStudentRollNo(rollNotextField.getText());
+				studentBean.setStudentBatch(batchTextField.getText());
+				studentBean.setStudentSection(sectionTextField.getText());
 					
 					if(maleRadioButton.isSelected())
-						setGender("Male");
+						studentBean.setStudentGender("Male");
 					else
-						setGender("Female");
+						studentBean.setStudentGender("Female");
 					
 					if(matricCheckBox.isSelected())
-						setQualification("Matric, ");
+						studentBean.setStudentQualification("Matric, ");
 					if(interCheckBox.isSelected())
-						setQualification(getQualification()+"Inter, ");
+						studentBean.setStudentQualification(studentBean.getStudentQualification()+"Inter, ");
 					if(gradCheckBox.isSelected())
-						setQualification(getQualification()+"Graduate, ");
+						studentBean.setStudentQualification(studentBean.getStudentQualification()+"Graduate, ");
 					if(postGradCheckBox.isSelected())
-						setQualification(getQualification()+"Post-Graduate, ");
+						studentBean.setStudentQualification(studentBean.getStudentQualification()+"Post-Graduate, ");
 				
-					setAddress(addressTextArea.getText());
-					setCountry(countryComboBox.getSelectedItem().toString());
+					studentBean.setStudentAddress(addressTextArea.getText());
+					studentBean.setStudentCountry(countryComboBox.getSelectedItem().toString());
 
-				return true;
+				return 1;
 			}
 			catch (Exception e) {
-				return false;
+				return 0;
 			}
 		}
+	//----> Method to save record into JSON File
 		private boolean saveInfoToJSONFile() {
-			getInfo();	
+			getStudentInfo();	
 			JSONObject json = new JSONObject();
-			json.put("ID", generateId());
-		    json.put("Name", getName());
-		    json.put("Roll_No", getRollNo());
-		    json.put("Batch", getBatch());
-		    json.put("Section", getSection());
-		    json.put("Gender", getGender());
-		    json.put("Qualification", getQualification());
-		    json.put("Address", getAddress());
-		    json.put("Country", getCountry());
+			json.put("ID", studentBean.generateId());
+		    json.put("Name", studentBean.getStudentName());
+		    json.put("Roll_No", studentBean.getStudentRollNo());
+		    json.put("Batch", studentBean.getStudentBatch());
+		    json.put("Section", studentBean.getStudentSection());
+		    json.put("Gender", studentBean.getStudentGender());
+		    json.put("Qualification", studentBean.getStudentQualification());
+		    json.put("Address", studentBean.getStudentAddress());
+		    json.put("Country", studentBean.getStudentCountry());
 		    try {
 		         FileWriter file = new FileWriter("student.json");
 		         file.write(json.toJSONString());
@@ -262,143 +264,84 @@ public class StudentFrame extends JFrame {
 		      }
 		}
 		
-		private void populateCountryComboBox() {
-			countryComboBox.addItem("Pakistan");
-			countryComboBox.addItem("India");
-			countryComboBox.addItem("China");
-		}
-
-		public String getGender() {
-			return gender;
-		}
-
-		public void setGender(String gender) {
-			this.gender = gender;
-		}
-
-		public String getBatch() {
-			return batch;
-		}
-
-		public void setBatch(String batch) {
-			this.batch = batch;
-		}
-		
-
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		public String getRollNo() {
-			return rollNo;
-		}
-
-		public void setRollNo(String rollNo) {
-			this.rollNo = rollNo;
-		}
-
-		public String getSection() {
-			return section;
-		}
-
-		public void setSection(String section) {
-			this.section = section;
-		}
-
-		public String getQualification() {
-			return qualification;
-		}
-
-		public void setQualification(String qualification) {
-			this.qualification = qualification;
-		}
-
-		public String getAddress() {
-			return address;
-		}
-
-		public void setAddress(String address) {
-			this.address = address;
-		}
-
-		public String getCountry() {
-			return country;
-		}
-
-		public void setCountry(String country) {
-			this.country = country;
-		}
-		
-		private int generateId() {
-			Random randomNumber = new Random(100);
-			return randomNumber.nextInt();
-		}
-		private int getId() {
-			return id;
-		}
-		private void setId(int id) {
-			this.id = id;
-		}
+		//-----> method to get data from JSON File
 		private boolean getInfoFromJson() {
 			// TODO Auto-generated method stub
 			JSONParser parser = new JSONParser();
 			try {
 				JSONObject json = (JSONObject) parser.parse(new FileReader("student.json"));
-		         setName(json.get("Name").toString());
-		         setRollNo(json.get("Roll_No").toString());
-		         setQualification(json.get("Qualification").toString());
-		         setBatch(json.get("Batch").toString());
-		         setSection(json.get("Section").toString());
-		         setGender(json.get("Gender").toString());
-		         setCountry(json.get("Country").toString());
-		         setAddress(json.get("Address").toString());
+				studentBean.setStudentName(json.get("Name").toString());
+				studentBean.setStudentRollNo(json.get("Roll_No").toString());
+				studentBean.setStudentQualification(json.get("Qualification").toString());
+				studentBean.setStudentBatch(json.get("Batch").toString());
+				studentBean.setStudentSection(json.get("Section").toString());
+				studentBean.setStudentGender(json.get("Gender").toString());
+				studentBean.setStudentCountry(json.get("Country").toString());
+				studentBean.setStudentAddress(json.get("Address").toString());
 				return true;
 			} catch (Exception e) {
 				e.printStackTrace();
 			return false;
 			}
 		}
+
+//------------> End of Methods
+		
+		
+	//-----> Button Events
+	//-----> Insert data to JSON File
+	private class SwingAction extends AbstractAction {
+		public SwingAction() {
+			putValue(NAME, "JSON");
+			putValue(SHORT_DESCRIPTION, "Save data to JSON file.");
+		}
+		public void actionPerformed(ActionEvent e) {
+			if(saveInfoToJSONFile())
+				JOptionPane.showMessageDialog(rootPane, "Record Saved To JSON File!");
+			else
+				JOptionPane.showMessageDialog(rootPane, "Record Saving Error!");
+		}
+	}//end of SwingAction Class JSON
+
+	
+	//-----> Fetch data from JSON File
+	private class SwingAction_1 extends AbstractAction {
+		public SwingAction_1() {
+			putValue(NAME, "Fetch JSON");
+			putValue(SHORT_DESCRIPTION, "Get Data From JSON File");
+		}
+		public void actionPerformed(ActionEvent e) {
+		}
+	}//end of SwingAction_1 Class Get from JSON
+	
+	//----------> Insert data to MySql Database
 	private class SwingAction_2 extends AbstractAction {
 		public SwingAction_2() {
 			putValue(NAME, "Database");
-			putValue(SHORT_DESCRIPTION, "This button will insert the data to MySql Database");
+			putValue(SHORT_DESCRIPTION, "Insert data to MySql Database");
 		}
 		public void actionPerformed(ActionEvent e) {
-			Connection con = SQLConnection.makeConnection();
-			getInfo();
-			String sqlQuery = "insert into student values(?,?,?,?,?,?,?,?,?)";
-			try {
-				PreparedStatement pst=con.prepareStatement(sqlQuery);
-				pst.setInt(1, generateId());
-				pst.setString(2, getRollNo());
-				pst.setString(3, getName());
-				pst.setString(4, getBatch());
-				pst.setString(5, getSection());
-				pst.setString(6, getGender());
-				pst.setString(7, getQualification());
-				pst.setString(8, getAddress());
-				pst.setString(9, getCountry());
-				if(pst.executeUpdate()==1)
-					JOptionPane.showMessageDialog(rootPane, "Record Saved To SQl Database!");
-				else
-					JOptionPane.showMessageDialog(rootPane, "Database Record Saving Error!");
-			} catch (SQLException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
+			getStudentInfo();
 			
-		}
-	}
-	private class SwingAction_1 extends AbstractAction {
-		public SwingAction_1() {
-			putValue(NAME, "Print");
-			putValue(SHORT_DESCRIPTION, "This Button Will Get Data From Database");
+			if(studentDao.createStudent(studentBean)==1)
+				JOptionPane.showMessageDialog(rootPane, "Record Saved To SQl Database!");
+			else
+				JOptionPane.showMessageDialog(rootPane, "Database Record Saving Error!");
+		}		
+		
+	}//end of SwingAction_2 Class Insert data to MySql Database
+	
+	
+	//This event will fetch records from MySql database
+	private class SwingAction_3 extends AbstractAction {
+		public SwingAction_3() {
+			putValue(NAME, "Show Records");
+			putValue(SHORT_DESCRIPTION, "Show Database Records");
 		}
 		public void actionPerformed(ActionEvent e) {
+			
+			new Students(studentDao.getAllStudents());
 		}
-	}
-}
+
+	}//end of fetching MySql database records Class SwingAction_3
+}//end of main class

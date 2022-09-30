@@ -1,3 +1,4 @@
+package com.azs.connection;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -17,7 +18,7 @@ public class SQLConnection {
             catch (SQLException e) {
             	System.out.println(e.getMessage());
                 JOptionPane.showMessageDialog(null, "Connection not successfull!"+e.getMessage());
-                    }
+            }
 		}
 	return con;
     }
